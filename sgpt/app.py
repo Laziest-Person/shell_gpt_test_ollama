@@ -39,6 +39,12 @@ def main(
         max=2.0,
         help="Randomness of generated output.",
     ),
+    num_predict: int = typer.Option(
+        4096,
+        min=128,
+        max=32000,
+        help="Maximum contextual tokens for LLM"
+    ),
     top_p: float = typer.Option(
         1.0,
         min=0.0,
@@ -73,6 +79,13 @@ def main(
         "--code",
         "-c",
         help="Generate only code.",
+        rich_help_panel="Assistance Options",
+    ),
+    shell_fix: bool = typer.Option(
+        False,
+        "--shell-fix",
+        "-f",
+        help="Attempt to fix an erroneous input bash command or script.",
         rich_help_panel="Assistance Options",
     ),
     functions: bool = typer.Option(
@@ -183,9 +196,9 @@ def main(
             # Non-interactive shell.
             pass
 
-    if sum((shell, describe_shell, code)) > 1:
+    if sum((shell, describe_shell, code, shell_fix)) > 1:
         raise BadArgumentUsage(
-            "Only one of --shell, --describe-shell, and --code options can be used at a time."
+            "Only one of --shell, --describe-shell, --shell-fix and --code options can be used at a time."
         )
 
     if chat and repl:
@@ -198,7 +211,7 @@ def main(
         prompt = get_edited_prompt()
 
     role_class = (
-        DefaultRoles.check_get(shell, describe_shell, code)
+        DefaultRoles.check_get(shell, describe_shell, code, shell_fix)
         if not role
         else SystemRole.get(role)
     )
@@ -211,6 +224,7 @@ def main(
             init_prompt=prompt,
             model=model,
             temperature=temperature,
+            num_predict=num_predict,
             top_p=top_p,
             caching=cache,
             functions=function_schemas,
@@ -221,6 +235,7 @@ def main(
             prompt=prompt,
             model=model,
             temperature=temperature,
+            num_predict=num_predict,
             top_p=top_p,
             caching=cache,
             functions=function_schemas,
@@ -230,6 +245,7 @@ def main(
             prompt=prompt,
             model=model,
             temperature=temperature,
+            num_predict=num_predict,
             top_p=top_p,
             caching=cache,
             functions=function_schemas,
@@ -251,6 +267,7 @@ def main(
                 full_completion,
                 model=model,
                 temperature=temperature,
+                num_predict=num_predict,
                 top_p=top_p,
                 caching=cache,
                 functions=function_schemas,
